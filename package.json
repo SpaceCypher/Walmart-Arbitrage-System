@@ -1,0 +1,159 @@
+{
+  "name": "ai-inventory-arbitrage-network",
+  "version": "1.0.0",
+  "description": "AI-driven autonomous inventory arbitrage system for Walmart store network",
+  "main": "dist/app.js",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc && tsc-alias",
+    "start": "node dist/app.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "cypress run",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "type-check": "tsc --noEmit",
+    "generate-docs": "typedoc src --out docs/api",
+    "docker:build": "docker build -t arbitrage-backend .",
+    "docker:run": "docker run -p 3000:3000 arbitrage-backend",
+    "migrate": "ts-node src/database/migrations/run-migrations.ts",
+    "seed": "ts-node src/database/seeds/run-seeds.ts",
+    "generate-data": "ts-node scripts/generate-synthetic-data.ts"
+  },
+  "keywords": [
+    "ai",
+    "inventory",
+    "arbitrage",
+    "walmart",
+    "automation",
+    "optimization",
+    "supply-chain"
+  ],
+  "author": "Walmart Inventory Innovation Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "compression": "^1.7.4",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.9.2",
+    "mongoose": "^7.5.0",
+    "redis": "^4.6.7",
+    "ioredis": "^5.3.2",
+    "socket.io": "^4.7.2",
+    "ws": "^8.13.0",
+    "axios": "^1.5.0",
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.3.1",
+    "config": "^3.3.9",
+    "winston": "^3.10.0",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.32.5",
+    "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0",
+    "node-cron": "^3.0.2",
+    "bull": "^4.11.3",
+    "@google/generative-ai": "^0.1.3",
+    "openai": "^4.0.0",
+    "compromise": "^14.10.0",
+    "ml-regression": "^6.1.1",
+    "simple-statistics": "^7.8.2",
+    "faker": "^5.5.3",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.43",
+    "node-cache": "^5.1.2",
+    "express-prometheus-middleware": "^1.2.0",
+    "prom-client": "^14.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/express": "^4.17.17",
+    "@types/cors": "^2.8.13",
+    "@types/morgan": "^1.9.4",
+    "@types/compression": "^1.7.2",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/ws": "^8.5.5",
+    "@types/multer": "^1.4.7",
+    "@types/node-cron": "^3.0.8",
+    "@types/lodash": "^4.14.195",
+    "@types/faker": "^5.5.8",
+    "@types/jest": "^29.5.4",
+    "@types/supertest": "^2.0.12",
+    "typescript": "^5.1.6",
+    "tsx": "^3.12.7",
+    "tsc-alias": "^1.8.7",
+    "jest": "^29.6.2",
+    "ts-jest": "^29.1.1",
+    "supertest": "^6.3.3",
+    "cypress": "^12.17.4",
+    "@cypress/code-coverage": "^3.12.2",
+    "eslint": "^8.47.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "prettier": "^3.0.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "nodemon": "^3.0.1",
+    "typedoc": "^0.24.8",
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test && npm run type-check"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/tests"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/**/index.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/walmart/ai-inventory-arbitrage-network.git"
+  },
+  "bugs": {
+    "url": "https://github.com/walmart/ai-inventory-arbitrage-network/issues"
+  },
+  "homepage": "https://github.com/walmart/ai-inventory-arbitrage-network#readme"
+}

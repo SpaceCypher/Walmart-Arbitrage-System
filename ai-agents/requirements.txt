@@ -1,0 +1,8 @@
+google-generativeai>=0.8.0
+pymongo>=4.6.0
+redis>=5.0.0
+python-dotenv>=1.0.0
+fastapi>=0.108.0
+uvicorn>=0.25.0
+requests>=2.31.0
+pydantic>=2.5.0
