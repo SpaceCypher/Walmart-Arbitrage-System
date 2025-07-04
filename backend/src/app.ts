@@ -24,6 +24,7 @@ import agentProductRoutes from './routes/agentProducts';
 import marketplaceRoutes from './routes/marketplace';
 import aiAgentRoutes from './routes/aiAgents';
 import tradeDecisionRoutes from './routes/tradeDecisions';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 // Import agent system
 import { AgentManager, AgentManagerConfig } from './agents/AgentManager';
@@ -109,6 +110,7 @@ class App {
     this.app.use('/api/v1/ai-agents', aiAgentRoutes); // New AI agent API integration
     this.app.use('/api/v1/trade-decisions', tradeDecisionRoutes); // Trade decision tracking
     this.app.use('/api/v1/trade-decisions', tradeDecisionRoutes); // New trade decisions API
+    this.app.use('/api/v1/analytics', analyticsRoutes); // New analytics API integration
 
     // Root endpoint
     this.app.get('/', (req, res) => {

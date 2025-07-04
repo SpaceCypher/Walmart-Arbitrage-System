@@ -164,7 +164,7 @@ const TradingDashboard: React.FC = () => {
       // Transform opportunities and filter out those with actionable trades
       const transformedOpportunities = (response.data?.data?.opportunities || [])
         .map((opp: any, index: number) => ({
-          id: `${opp.product_id}-${index}`,
+          id: opp.id || `${opp.product_id}-${index}`, // Use the AI-generated ID if available
           ...opp,
           status: opp.status || 'pending',
         }))
@@ -191,9 +191,57 @@ const TradingDashboard: React.FC = () => {
   });
 
   const handleApprove = async (opportunity: TradeOpportunity) => {
+    // Prevent multiple clicks on the same opportunity
+    if (executingTrades.has(opportunity.id)) {
+      return;
+    }
+
     try {
       setExecutingTrades(prev => new Set(prev).add(opportunity.id));
       
+      // Immediately remove from UI to prevent duplicate clicks
+      setOpportunities(prev => 
+        prev.filter(opp => opp.id !== opportunity.id)
+      );
+      
+      // First, create a trade record to get a tradeId
+      const tradeData = {
+        fromStoreId: opportunity.opportunity.source_store,
+        toStoreId: opportunity.opportunity.target_store,
+        productId: opportunity.product_id,
+        sku: `${opportunity.product_id}-${opportunity.opportunity.source_store}`,
+        quantity: opportunity.opportunity.quantity,
+        estimatedProfit: opportunity.opportunity.potential_profit,
+        transportCost: 0, // This would be calculated by the transport cost function
+        urgencyScore: 75, // Convert urgency to score
+        proposedBy: 'user',
+        reasoning: opportunity.opportunity.reasoning,
+        constraints: {
+          maxTransportCost: opportunity.opportunity.potential_profit * 0.2,
+          minProfitMargin: 5,
+          deliveryDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          minQuantity: Math.floor(opportunity.opportunity.quantity * 0.5),
+          maxQuantity: opportunity.opportunity.quantity,
+        }
+      };
+
+      // Create the trade record
+      const tradeResponse = await fetch('/api/v1/trades', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tradeData),
+      });
+
+      if (!tradeResponse.ok) {
+        const tradeError = await tradeResponse.json();
+        throw new Error(tradeError.error || 'Failed to create trade');
+      }
+
+      const tradeResult = await tradeResponse.json();
+      const tradeId = tradeResult.data.tradeId;
+
       // Create marketplace bid
       const bidData = {
         agentId: `ai_agent_${opportunity.product_id}`,
@@ -210,6 +258,7 @@ const TradingDashboard: React.FC = () => {
           confidenceLevel: opportunity.opportunity.confidence,
           aiGenerated: true,
           reasoning: opportunity.opportunity.reasoning,
+          tradeId: tradeId,
         }
       };
 
@@ -233,24 +282,37 @@ const TradingDashboard: React.FC = () => {
       // Save trade decision to backend
       await tradeDecisionsAPI.create({
         productId: opportunity.product_id,
+        tradeId: tradeId,
         opportunityData: opportunity.opportunity,
         decision: 'approved',
         bidId,
         metadata: bidData.metadata
       });
+
+      // Mark the opportunity as processed in the AI system
+      try {
+        await fetch(`/api/v1/ai-agents/opportunities/${opportunity.id}/process`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            decision: 'approved',
+            tradeId: tradeId,
+            bidId: bidId
+          }),
+        });
+      } catch (error) {
+        console.warn('Could not mark opportunity as processed in AI system:', error);
+      }
       
-      // Update opportunity status locally
-      setOpportunities(prev => 
-        prev.map(opp => 
-          opp.id === opportunity.id 
-            ? { ...opp, status: 'approved' as const, bidId }
-            : opp
-        )
-      );
-      
-      alert(`✅ Trade approved! Bid ${bidId} created for ${opportunity.opportunity.quantity} units with potential profit of $${opportunity.opportunity.potential_profit.toLocaleString()}`);
+      alert(`✅ Trade approved! Trade ${tradeId} and Bid ${bidId} created for ${opportunity.opportunity.quantity} units with potential profit of $${opportunity.opportunity.potential_profit.toLocaleString()}`);
     } catch (error) {
       console.error('Error approving trade:', error);
+      
+      // Re-add the opportunity back to the list if there was an error
+      setOpportunities(prev => [opportunity, ...prev]);
+      
       alert(`❌ Failed to approve trade: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setExecutingTrades(prev => {
@@ -263,25 +325,40 @@ const TradingDashboard: React.FC = () => {
 
   const handleReject = async (opportunity: TradeOpportunity) => {
     try {
+      // Immediately remove from UI
+      setOpportunities(prev => 
+        prev.filter(opp => opp.id !== opportunity.id)
+      );
+      
       // Save trade decision to backend
       await tradeDecisionsAPI.create({
         productId: opportunity.product_id,
         opportunityData: opportunity.opportunity,
         decision: 'rejected'
       });
-      
-      // Update opportunity status locally
-      setOpportunities(prev => 
-        prev.map(opp => 
-          opp.id === opportunity.id 
-            ? { ...opp, status: 'rejected' as const }
-            : opp
-        )
-      );
+
+      // Mark the opportunity as processed in the AI system
+      try {
+        await fetch(`/api/v1/ai-agents/opportunities/${opportunity.id}/process`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            decision: 'rejected'
+          }),
+        });
+      } catch (error) {
+        console.warn('Could not mark opportunity as processed in AI system:', error);
+      }
       
       alert(`❌ Trade rejected for ${opportunity.product_id}`);
     } catch (error) {
       console.error('Error rejecting trade:', error);
+      
+      // Re-add the opportunity back to the list if there was an error
+      setOpportunities(prev => [opportunity, ...prev]);
+      
       alert(`❌ Failed to reject trade: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

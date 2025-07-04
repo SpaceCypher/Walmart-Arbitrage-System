@@ -89,6 +89,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
       productId,
+      tradeId,
       opportunityData,
       decision,
       userId = 'system',
@@ -119,6 +120,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const tradeDecision = new TradeDecision({
       productId,
+      tradeId,
       opportunityData,
       decision,
       userId,
@@ -131,6 +133,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     logger.info('Trade decision created:', {
       id: tradeDecision._id,
       productId,
+      tradeId,
       decision,
       userId
     });

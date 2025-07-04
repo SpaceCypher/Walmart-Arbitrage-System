@@ -10,7 +10,7 @@ yarn.lock
 dist/
 build/
 out/
-
+.snapback/
 # TypeScript
 *.tsbuildinfo
 

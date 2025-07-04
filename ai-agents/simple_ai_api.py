@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import uvicorn
 import os
+from bson import ObjectId
 from simple_ai_agent import AgentRunner, DatabaseManager
 from dotenv import load_dotenv
 
@@ -156,19 +157,36 @@ async def get_recent_opportunities(limit: int = 20):
         
         decisions = list(db_manager.db.agent_decisions.find(
             {"decision.analysis_result.opportunities": {"$exists": True}},
-            {"productId": 1, "decision": 1, "timestamp": 1}
-        ).sort("timestamp", -1).limit(limit))
+            {"productId": 1, "decision": 1, "timestamp": 1, "processed_opportunities": 1, "_id": 1}
+        ).sort("timestamp", -1).limit(limit * 2))  # Get more to account for filtering
         
         opportunities = []
         for decision in decisions:
             analysis = decision.get('decision', {}).get('analysis_result', {})
-            for opp in analysis.get('opportunities', []):
-                opportunities.append({
-                    "product_id": decision.get('productId'),
-                    "opportunity": opp,
-                    "timestamp": decision.get('timestamp'),
-                    "analysis": analysis.get('analysis', '')
-                })
+            processed_opps = decision.get('processed_opportunities', [])
+            decision_id = str(decision.get('_id', ''))
+            
+            # Create a set of processed opportunity identifiers for quick lookup
+            processed_ids = set()
+            for proc_opp in processed_opps:
+                processed_ids.add(proc_opp.get('opportunity_id', ''))
+            
+            for i, opp in enumerate(analysis.get('opportunities', [])):
+                # Create a unique ID for this opportunity using decision ID, product ID, stores, and index
+                opp_id = f"{decision_id}-{decision.get('productId')}-{opp.get('source_store', '')}-{opp.get('target_store', '')}-{i}"
+                
+                # Skip if this opportunity has been processed
+                if opp_id not in processed_ids:
+                    opportunities.append({
+                        "id": opp_id,  # Add unique ID for tracking
+                        "product_id": decision.get('productId'),
+                        "opportunity": opp,
+                        "timestamp": decision.get('timestamp'),
+                        "analysis": analysis.get('analysis', '')
+                    })
+        
+        # Limit to requested amount after filtering
+        opportunities = opportunities[:limit]
         
         return {
             "opportunities": opportunities,
@@ -228,6 +246,91 @@ async def analyze_single_product(product_id: str):
         return result
     except Exception as e:
         logger.error(f"Error analyzing product {product_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/opportunities/{opportunity_id}/process")
+async def process_opportunity(opportunity_id: str, request: dict):
+    """Mark an opportunity as processed (approved/rejected)"""
+    try:
+        if not db_manager:
+            raise HTTPException(status_code=503, detail="Database not available")
+        
+        decision = request.get('decision')
+        trade_id = request.get('tradeId')
+        bid_id = request.get('bidId')
+        processed_at = request.get('processedAt', datetime.now().isoformat())
+        
+        if not decision or decision not in ['approved', 'rejected']:
+            raise HTTPException(status_code=400, detail="Decision must be 'approved' or 'rejected'")
+        
+        # Extract decision ID from opportunity ID
+        decision_id = opportunity_id.split('-')[0] if '-' in opportunity_id else None
+        
+        if decision_id:
+            # Update the specific agent decision by its ObjectId
+            try:
+                decision_obj_id = ObjectId(decision_id)
+                update_result = db_manager.db.agent_decisions.update_one(
+                    {"_id": decision_obj_id},
+                    {
+                        "$push": {
+                            "processed_opportunities": {
+                                "opportunity_id": opportunity_id,
+                                "decision": decision,
+                                "trade_id": trade_id,
+                                "bid_id": bid_id,
+                                "processed_at": processed_at
+                            }
+                        }
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Could not parse decision ID as ObjectId: {e}")
+                # Fallback to broader update
+                update_result = db_manager.db.agent_decisions.update_many(
+                    {"decision.analysis_result.opportunities": {"$exists": True}},
+                    {
+                        "$push": {
+                            "processed_opportunities": {
+                                "opportunity_id": opportunity_id,
+                                "decision": decision,
+                                "trade_id": trade_id,
+                                "bid_id": bid_id,
+                                "processed_at": processed_at
+                            }
+                        }
+                    }
+                )
+        else:
+            # Fallback to broader update if we can't extract decision ID
+            update_result = db_manager.db.agent_decisions.update_many(
+                {"decision.analysis_result.opportunities": {"$exists": True}},
+                {
+                    "$push": {
+                        "processed_opportunities": {
+                            "opportunity_id": opportunity_id,
+                            "decision": decision,
+                            "trade_id": trade_id,
+                            "bid_id": bid_id,
+                            "processed_at": processed_at
+                        }
+                    }
+                }
+            )
+        
+        logger.info(f"Marked opportunity {opportunity_id} as {decision}. Updated {update_result.modified_count} records.")
+        
+        return {
+            "opportunity_id": opportunity_id,
+            "decision": decision,
+            "trade_id": trade_id,
+            "processed_at": processed_at,
+            "updated_records": update_result.modified_count
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing opportunity {opportunity_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
