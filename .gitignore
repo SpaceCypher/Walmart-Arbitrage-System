@@ -246,3 +246,4 @@ local.sqlite
 docker-volumes/
 postgres-data/
 redis-data/
+ai-agents/venv/ 
