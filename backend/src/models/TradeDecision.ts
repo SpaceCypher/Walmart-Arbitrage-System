@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITradeDecision extends Document {
   productId: string;
+  tradeId?: string; // Added tradeId field
   opportunityData: {
     type: string;
     confidence: number;
@@ -24,6 +25,10 @@ const TradeDecisionSchema: Schema = new Schema({
   productId: {
     type: String,
     required: true,
+    index: true,
+  },
+  tradeId: {
+    type: String,
     index: true,
   },
   opportunityData: {

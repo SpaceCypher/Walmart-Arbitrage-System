@@ -233,6 +233,7 @@ export const tradeDecisionsAPI = {
   // Create a new trade decision
   create: (data: {
     productId: string;
+    tradeId?: string;
     opportunityData: any;
     decision: 'approved' | 'rejected';
     bidId?: string;

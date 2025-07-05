@@ -160,4 +160,47 @@ router.get('/health', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
+// Mark opportunity as processed (approved/rejected)
+router.post('/opportunities/:opportunityId/process', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { opportunityId } = req.params;
+    const { decision, tradeId, bidId } = req.body;
+    
+    if (!decision || !['approved', 'rejected'].includes(decision)) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Decision must be either "approved" or "rejected"' },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Try to mark the opportunity as processed in the AI agents system
+    try {
+      await axios.post(`${AI_AGENT_API_URL}/opportunities/${opportunityId}/process`, {
+        decision,
+        tradeId,
+        bidId,
+        processedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.warn('Could not mark opportunity as processed in AI system:', error);
+      // Continue anyway - we'll handle it in our local system
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        opportunityId,
+        decision,
+        tradeId,
+        processedAt: new Date().toISOString()
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Error processing opportunity:', error);
+    next(error);
+  }
+});
+
 export default router;
