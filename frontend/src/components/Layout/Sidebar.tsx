@@ -18,7 +18,6 @@ interface SidebarProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Trading', href: '/trading', icon: ArrowsRightLeftIcon },
-  { name: 'AI Agents (Legacy)', href: '/agents', icon: CpuChipIcon },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingCartIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'AI Insights', href: '/ai-insights', icon: SparklesIcon },

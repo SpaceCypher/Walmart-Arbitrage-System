@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { agentProductsAPI } from '../../services/api';
 import { AgentProduct } from '../../types/api';
-import AgentCard from './AgentCard';
 import AgentFilters from './AgentFilters';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import ErrorMessage from '../Common/ErrorMessage';
@@ -111,10 +110,6 @@ const AgentDashboard: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">AI Agents (Legacy)</h1>
-          <p className="text-gray-400">Legacy view of agent-products (for reference only)</p>
-        </div>
         
         <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           <span className="text-lg mr-2">+</span>
@@ -154,15 +149,6 @@ const AgentDashboard: React.FC = () => {
       </div>
 
       {/* Agents Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAgents.map((agent) => (
-          <AgentCard
-            key={agent.productId}
-            agent={agent}
-            onRefresh={loadAgents}
-          />
-        ))}
-      </div>
 
       {filteredAgents.length === 0 && (
         <div className="text-center py-12">
