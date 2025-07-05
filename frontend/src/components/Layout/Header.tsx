@@ -8,9 +8,11 @@ import {
 interface HeaderProps {
   onMenuClick: () => void;
   isConnected: boolean;
+  onLogout?: () => void;
+  isAuthenticated?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected, onLogout, isAuthenticated }) => {
   return (
     <header className="bg-gray-900 shadow-lg border-b border-gray-700">
       <div className="flex items-center justify-between h-16 px-6">
@@ -56,6 +58,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected }) => {
           <div className="text-sm text-gray-400">
             {new Date().toLocaleTimeString()}
           </div>
+
+          {/* Logout button */}
+          {isAuthenticated && onLogout && (
+            <button
+              onClick={onLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </header>

@@ -142,11 +142,20 @@ const getStoreTypeInfo = (type: string) => {
   }
 };
 
-const TradingDashboard: React.FC = () => {
+interface TradingDashboardProps {
+  userRole: 'admin' | 'store';
+  storeId?: string;
+}
+
+const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }) => {
   const [opportunities, setOpportunities] = useState<TradeOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'high-profit' | 'urgent'>('all');
   const [executingTrades, setExecutingTrades] = useState<Set<string>>(new Set());
+  const [storeFilter, setStoreFilter] = useState(storeId || '');
+
+  // If logged in as store, lock the filter and prevent editing
+  const isStoreUser = userRole === 'store';
 
   useEffect(() => {
     loadOpportunities();
@@ -184,7 +193,32 @@ const TradingDashboard: React.FC = () => {
     }
   };
 
+  function getStoreNameSafe(storeId: string): string {
+    if (storeId in STORE_LOCATIONS) {
+      return STORE_LOCATIONS[storeId as keyof typeof STORE_LOCATIONS].name.toLowerCase();
+    }
+    return '';
+  }
+
   const filteredOpportunities = opportunities.filter(opp => {
+    const storeFilterValue = storeFilter.trim().toLowerCase();
+
+    // Get store IDs/codes
+    const sourceStoreId = (opp.opportunity.source_store || '').toLowerCase();
+    const targetStoreId = (opp.opportunity.target_store || '').toLowerCase();
+
+    // Get store names safely
+    const sourceStoreName = getStoreNameSafe(opp.opportunity.source_store);
+    const targetStoreName = getStoreNameSafe(opp.opportunity.target_store);
+
+    const storeMatch =
+      !storeFilterValue ||
+      sourceStoreId.includes(storeFilterValue) ||
+      targetStoreId.includes(storeFilterValue) ||
+      sourceStoreName.includes(storeFilterValue) ||
+      targetStoreName.includes(storeFilterValue);
+
+    if (!storeMatch) return false;
     if (filter === 'high-profit') return opp.opportunity.potential_profit > 10000;
     if (filter === 'urgent') return opp.opportunity.urgency === 'critical' || opp.opportunity.urgency === 'high';
     return true;
@@ -438,6 +472,21 @@ const TradingDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Store Filter Input */}
+      <div className="flex items-center space-x-4 mb-4">
+        <input
+          type="text"
+          placeholder="Filter by Store ID..."
+          value={storeFilter}
+          onChange={e => !isStoreUser && setStoreFilter(e.target.value)}
+          className="bg-gray-800 border border-gray-700 text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 w-64"
+          disabled={isStoreUser}
+        />
+        <span className="text-gray-400 text-sm">
+          Showing trades for store ID: <span className="font-semibold text-blue-400">{storeFilter || 'All'}</span>
+        </span>
       </div>
 
       {/* Filters */}

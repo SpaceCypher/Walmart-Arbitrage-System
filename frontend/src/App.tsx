@@ -8,11 +8,23 @@ import MarketplaceDashboard from './components/Marketplace/MarketplaceDashboard'
 import AnalyticsDashboard from './components/Analytics/AnalyticsDashboard';
 import AIInsightsDashboard from './components/AIInsights/AIInsightsDashboard';
 import TradingDashboard from './components/Trading/TradingDashboard';
+import LoginPage from './components/Auth/LoginPage';
 import webSocketService from './services/websocket';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+
+  // Load auth from localStorage on mount
+  const [auth, setAuth] = useState<{ role: 'admin' | 'store' | null, storeId?: string }>(() => {
+    const stored = localStorage.getItem('auth');
+    return stored ? JSON.parse(stored) : { role: null };
+  });
+
+  useEffect(() => {
+    // Save auth to localStorage whenever it changes
+    localStorage.setItem('auth', JSON.stringify(auth));
+  }, [auth]);
 
   useEffect(() => {
     // Subscribe to WebSocket events
@@ -37,6 +49,15 @@ function App() {
     };
   }, []);
 
+  const handleLogin = (role: 'admin' | 'store', storeId?: string) => {
+    setAuth({ role, storeId });
+  };
+
+  const handleLogout = () => {
+    setAuth({ role: null });
+    localStorage.removeItem('auth');
+  };
+
   return (
     <Router>
       <div className="flex h-screen bg-gray-900">
@@ -49,19 +70,40 @@ function App() {
           <Header 
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             isConnected={isConnected}
+            onLogout={handleLogout} // Pass logout to header
+            isAuthenticated={!!auth.role}
           />
           
           {/* Main content area */}
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-800">
             <div className="container mx-auto px-6 py-8">
               <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/agents" element={<AgentDashboard />} />
-                <Route path="/marketplace" element={<MarketplaceDashboard />} />
-                <Route path="/analytics" element={<AnalyticsDashboard />} />
-                <Route path="/ai-insights" element={<AIInsightsDashboard />} />
-                <Route path="/trading" element={<TradingDashboard />} />
+                {/* If not authenticated, show login page at root */}
+                {!auth.role && (
+                  <>
+                    <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
+                    {/* Redirect any other route to login */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </>
+                )}
+
+                {/* If authenticated, show app pages */}
+                {auth.role && (
+                  <>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/agents" element={<AgentDashboard />} />
+                    <Route path="/marketplace" element={<MarketplaceDashboard />} />
+                    <Route path="/analytics" element={<AnalyticsDashboard />} />
+                    <Route path="/ai-insights" element={<AIInsightsDashboard />} />
+                    <Route
+                      path="/trading"
+                      element={<TradingDashboard userRole={auth.role} storeId={auth.storeId} />}
+                    />
+                    {/* Redirect any unknown route to dashboard */}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </>
+                )}
               </Routes>
             </div>
           </main>
