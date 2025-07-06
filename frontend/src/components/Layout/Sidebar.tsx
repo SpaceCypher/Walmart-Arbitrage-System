@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   HomeIcon,
   CpuChipIcon,
@@ -24,6 +24,8 @@ const navigation = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Mobile backdrop */}

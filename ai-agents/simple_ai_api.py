@@ -149,8 +149,8 @@ async def run_cycle(background_tasks: BackgroundTasks, limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/opportunities")
-async def get_recent_opportunities(limit: int = 20):
-    """Get recent opportunities identified by agents"""
+async def get_recent_opportunities(limit: int = 20, storeId: Optional[str] = None):
+    """Get recent opportunities identified by agents, optionally filtered by storeId"""
     try:
         if not db_manager:
             raise HTTPException(status_code=503, detail="Database not available")
@@ -172,9 +172,12 @@ async def get_recent_opportunities(limit: int = 20):
                 processed_ids.add(proc_opp.get('opportunity_id', ''))
             
             for i, opp in enumerate(analysis.get('opportunities', [])):
+                # Filter by storeId if provided
+                if storeId:
+                    if not (str(opp.get('source_store', '')) == storeId or str(opp.get('target_store', '')) == storeId):
+                        continue
                 # Create a unique ID for this opportunity using decision ID, product ID, stores, and index
                 opp_id = f"{decision_id}-{decision.get('productId')}-{opp.get('source_store', '')}-{opp.get('target_store', '')}-{i}"
-                
                 # Skip if this opportunity has been processed
                 if opp_id not in processed_ids:
                     opportunities.append({
@@ -184,10 +187,8 @@ async def get_recent_opportunities(limit: int = 20):
                         "timestamp": decision.get('timestamp'),
                         "analysis": analysis.get('analysis', '')
                     })
-        
         # Limit to requested amount after filtering
         opportunities = opportunities[:limit]
-        
         return {
             "opportunities": opportunities,
             "count": len(opportunities),

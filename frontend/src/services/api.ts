@@ -117,8 +117,13 @@ export const aiAgentsAPI = {
   runCycle: () => api.post('/api/v1/ai-agents/cycle'),
   
   // Get recent opportunities identified by AI
-  getOpportunities: (limit = 20) => 
-    api.get(`/api/v1/ai-agents/opportunities?limit=${limit}`),
+  getOpportunities: (limit = 20, storeId?: string) => {
+    let url = `/api/v1/ai-agents/opportunities?limit=${limit}`;
+    if (storeId) {
+      url += `&storeId=${encodeURIComponent(storeId)}`;
+    }
+    return api.get(url);
+  },
   
   // Get AI analysis for specific product
   getProductAnalysis: (productId: string) => 

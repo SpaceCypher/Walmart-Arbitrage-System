@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { aiAgentsAPI, tradeDecisionsAPI } from '../../services/api';
 import {
   CheckCircleIcon,
@@ -18,6 +18,7 @@ import {
   calculateRealDistance, 
   calculateEnhancedTransportCost 
 } from '../../utils/storeData';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface TradeOpportunity {
   id: string;
@@ -153,6 +154,10 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
   const [filter, setFilter] = useState<'all' | 'high-profit' | 'urgent'>('all');
   const [executingTrades, setExecutingTrades] = useState<Set<string>>(new Set());
   const [storeFilter, setStoreFilter] = useState(storeId || '');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const selectedRef = useRef<HTMLDivElement | null>(null);
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
 
   // If logged in as store, lock the filter and prevent editing
   const isStoreUser = userRole === 'store';
@@ -164,6 +169,26 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
     const interval = setInterval(loadOpportunities, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Get tradeId from query param
+    const params = new URLSearchParams(location.search);
+    const tradeId = params.get('tradeId');
+    setSelectedTradeId(tradeId);
+  }, [location.search]);
+
+  useEffect(() => {
+    if (selectedRef.current && selectedTradeId) {
+      selectedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Remove tradeId from URL after focusing, but keep highlight for 1s
+      const params = new URLSearchParams(location.search);
+      if (params.has('tradeId')) {
+        params.delete('tradeId');
+        navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+        setTimeout(() => setSelectedTradeId(null), 1000); // Keep highlight for 1s
+      }
+    }
+  }, [selectedTradeId, loading]);
 
   const loadOpportunities = async () => {
     try {
@@ -533,11 +558,13 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
             const sourceStoreType = getStoreTypeInfo(sourceStore.type);
             const targetStoreType = getStoreTypeInfo(targetStore.type);
             const estimatedDelivery = calculateDeliveryTime(distance, opportunity.opportunity.urgency === 'high' || opportunity.opportunity.urgency === 'critical');
-
+            const isSelected = selectedTradeId === opportunity.id;
             return (
               <div
                 key={opportunity.id}
+                ref={isSelected ? selectedRef : undefined}
                 className={`bg-gray-800 rounded-lg border p-6 ${
+                  isSelected ? 'border-yellow-400 ring-2 ring-yellow-300 shadow-yellow-400/30' :
                   opportunity.status === 'pending' ? 'border-gray-700 shadow-lg' :
                   opportunity.status === 'approved' ? 'border-green-500 shadow-green-500/20' :
                   'border-red-500 shadow-red-500/20'
