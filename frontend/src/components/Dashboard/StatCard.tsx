@@ -56,37 +56,36 @@ const StatCard: React.FC<StatCardProps> = ({
   const colors = colorClasses[color];
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-            {title}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-white">
-            {value}
-          </p>
-          {subtitle && (
-            <p className="mt-1 text-sm text-gray-400">
-              {subtitle}
-            </p>
-          )}
-          {trend && (
-            <div className="mt-2 flex items-center">
-              <span
-                className={`text-sm font-medium ${
-                  trend.isPositive ? 'text-green-400' : 'text-red-400'
-                }`}
-              >
-                {trend.isPositive ? '+' : '-'}{Math.abs(trend.value)}%
-              </span>
-              <span className="text-xs text-gray-400 ml-1">vs last period</span>
-            </div>
-          )}
-        </div>
-        
-        <div className={`flex-shrink-0 p-3 rounded-lg ${colors.iconBg} bg-opacity-10`}>
+    <div className="bg-gray-800 rounded-xl min-h-[130px] p-4 border border-gray-700 hover:border-gray-600 transition-colors shadow flex flex-col items-center justify-between text-center">
+      <div className="flex flex-col items-center mb-2">
+        <div className={`flex items-center justify-center w-11 h-11 rounded-xl ${colors.iconBg} bg-opacity-20 mb-2`}>
           <Icon className={`h-6 w-6 ${colors.text}`} />
         </div>
+        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
+          {title}
+        </p>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <p className="text-3xl font-extrabold text-white leading-tight">
+          {value}
+        </p>
+        {subtitle && (
+          <p className="mt-1 text-sm text-gray-400">
+            {subtitle}
+          </p>
+        )}
+        {trend && (
+          <div className="mt-1 flex items-center">
+            <span
+              className={`text-xs font-medium ${
+                trend.isPositive ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {trend.isPositive ? '+' : '-'}{Math.abs(trend.value)}%
+            </span>
+            <span className="text-xs text-gray-400 ml-1">vs last period</span>
+          </div>
+        )}
       </div>
     </div>
   );

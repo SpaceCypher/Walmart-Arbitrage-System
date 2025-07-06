@@ -14,19 +14,14 @@ interface HeaderProps {
   isConnected: boolean;
   onLogout?: () => void;
   isAuthenticated?: boolean;
+  auth: { role: 'admin' | 'store' | null, storeId?: string };
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected, onLogout, isAuthenticated }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected, onLogout, isAuthenticated, auth }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const [topTrades, setTopTrades] = useState<any[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
-
-  // Read auth from localStorage
-  const [auth, setAuth] = useState<{ role: 'admin' | 'store' | null, storeId?: string }>(() => {
-    const stored = localStorage.getItem('auth');
-    return stored ? JSON.parse(stored) : { role: null };
-  });
 
   useEffect(() => {
     let isMounted = true;
@@ -89,14 +84,26 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isConnected, onLogout, isA
             <Bars3Icon className="h-6 w-6" />
           </button>
           <div className="hidden lg:block ml-4">
-            <h2 className="text-lg font-semibold text-white">
-              AI Inventory Arbitrage Network
-            </h2>
           </div>
+        </div>
+
+        {/* Center: Welcome message */}
+        <div className="flex-1 flex justify-center">
+          <span className="text-lg font-semibold text-gray-200">
+            {auth.role === 'admin'
+              ? 'Welcome, Admin! Manage your AI Arbitrage System.'
+              : auth.role === 'store' && auth.storeId
+                ? `Welcome, Store ${auth.storeId} ! Here are your latest opportunities.`
+                : 'Welcome to the AI Arbitrage System!'}
+          </span>
         </div>
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
+          {/* Show current user role/store */}
+          <div className="flex items-center px-3 py-1 rounded bg-gray-800 border border-gray-700 text-xs text-gray-300 font-semibold">
+            {auth.role === 'admin' ? 'Admin' : auth.role === 'store' && auth.storeId ? `Store: ${auth.storeId}` : 'Not logged in'}
+          </div>
           {/* Connection status */}
           <div className="flex items-center space-x-2">
             <WifiIcon 

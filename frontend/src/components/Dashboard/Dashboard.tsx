@@ -25,6 +25,13 @@ interface DashboardStats {
 }
 
 const Dashboard: React.FC = () => {
+  // Get storeId from localStorage auth (same as App.tsx/Header.tsx)
+  const auth = (() => {
+    const stored = localStorage.getItem('auth');
+    return stored ? JSON.parse(stored) : { role: null };
+  })();
+  const storeId = auth.role === 'store' && auth.storeId ? auth.storeId : undefined;
+
   const [stats, setStats] = useState<DashboardStats>({
     totalAgents: 0,
     activeAgents: 0,
@@ -38,10 +45,10 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [aiOpportunities, setAiOpportunities] = useState<any[]>([]);
+  const [allAiOpportunities, setAllAiOpportunities] = useState<any[]>([]); // Store all for admin
 
   useEffect(() => {
     loadDashboardData();
-    
     // Subscribe to real-time updates
     webSocketService.subscribe({
       onAgentUpdate: (data) => {
@@ -54,7 +61,6 @@ const Dashboard: React.FC = () => {
       },
       onBidPlaced: (data) => {
         console.log('New bid placed:', data);
-        // Add to recent activity
         setRecentActivity(prev => [
           { type: 'bid', message: `New bid placed: ${data.productId}`, timestamp: new Date() },
           ...prev.slice(0, 9)
@@ -62,24 +68,32 @@ const Dashboard: React.FC = () => {
       },
       onMatchFound: (data) => {
         console.log('Match found:', data);
-        // Add to recent activity
         setRecentActivity(prev => [
           { type: 'match', message: `Match found: ${data.buyProductId} ↔ ${data.sellProductId}`, timestamp: new Date() },
           ...prev.slice(0, 9)
         ]);
       },
     });
-
     return () => {
       webSocketService.unsubscribe();
     };
   }, []);
 
+  const filterOpportunitiesForStore = (opps: any[], auth: any) => {
+    if (auth.role === 'store' && auth.storeId) {
+      const storeIdLower = String(auth.storeId).toLowerCase();
+      return opps.filter((opp: any) => {
+        const src = String(opp.opportunity?.source_store || opp.source_store || '').toLowerCase();
+        const tgt = String(opp.opportunity?.target_store || opp.target_store || '').toLowerCase();
+        return src.includes(storeIdLower) || tgt.includes(storeIdLower);
+      });
+    }
+    return opps;
+  };
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Load data in parallel including AI agent data
       const [agentsResponse, bidsResponse, matchesResponse, overviewResponse, aiHealthResponse, aiStatusResponse, aiOpportunitiesResponse] = await Promise.all([
         agentProductsAPI.getAll(),
         marketplaceAPI.getBids(),
@@ -87,9 +101,8 @@ const Dashboard: React.FC = () => {
         analyticsAPI.getOverview(),
         aiAgentsAPI.getHealth().catch(() => ({ data: { data: { aiAgentHealth: { status: 'unavailable' } } } })),
         aiAgentsAPI.getStatus().catch(() => ({ data: { data: { aiAgentSystem: { total_products: 0 } } } })),
-        aiAgentsAPI.getOpportunities(5).catch(() => ({ data: { data: { opportunities: [] } } })),
+        aiAgentsAPI.getOpportunities(20).catch(() => ({ data: { data: { opportunities: [] } } })), // fetch more for admin
       ]);
-
       // Extract agents from nested response structure
       const agents = (agentsResponse.data as any)?.data?.products || (agentsResponse.data as any) || [];
       const bids = (bidsResponse.data as any)?.data?.bids || (bidsResponse.data as any) || [];
@@ -98,19 +111,29 @@ const Dashboard: React.FC = () => {
       const aiHealth = (aiHealthResponse.data as any)?.data?.aiAgentHealth || (aiHealthResponse.data as any) || {};
       const aiStatus = (aiStatusResponse.data as any)?.data?.aiAgentSystem || (aiStatusResponse.data as any) || {};
       const opportunities = (aiOpportunitiesResponse.data as any)?.data?.opportunities || (aiOpportunitiesResponse.data as any) || [];
+      setAllAiOpportunities(opportunities); // Save all for admin
+      const filteredOpportunities = filterOpportunitiesForStore(opportunities, auth);
+      setAiOpportunities(filteredOpportunities);
 
+      // Calculate possible revenue from the same set as the alert (top 5 for store, all for admin)
+      let possibleRevenue = 0;
+      if (!(overview.totalRevenue > 0)) {
+        if (auth.role === 'admin') {
+          possibleRevenue = (allAiOpportunities as any[]).reduce((sum: number, opp: any) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0);
+        } else {
+          possibleRevenue = (aiOpportunities as any[]).reduce((sum: number, opp: any) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0);
+        }
+      }
       setStats({
         totalAgents: agents.length,
         activeAgents: agents.filter((a: any) => a.agentStatus?.status === 'active').length,
         totalBids: bids.length,
         totalMatches: matches.length,
-        totalRevenue: overview.totalRevenue || 0,
+        totalRevenue: overview.totalRevenue > 0 ? overview.totalRevenue : possibleRevenue,
         profitMargin: overview.profitMargin || 0,
         aiAgentHealth: aiHealth.status || 'unavailable',
         aiProductsMonitored: aiStatus.total_products || 0,
       });
-
-      setAiOpportunities(opportunities.slice(0, 5));
 
       // Set initial recent activity
       const activities = [
@@ -154,29 +177,32 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 px-2 md:px-0">
       {/* Header */}
-      <div>
+      <div className="mb-2">
         <h1 className="text-3xl font-bold text-white">Dashboard</h1>
         <p className="text-gray-400">Overview of your AI Arbitrage Network</p>
       </div>
 
       {/* AI Trading Alert */}
-      {aiOpportunities.length > 0 && (
-        <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-lg p-6 border border-emerald-500">
-          <div className="flex items-center justify-between">
+      {(auth.role === 'admin' ? allAiOpportunities.length > 0 : aiOpportunities.length > 0) && (
+        <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl p-6 border border-emerald-500 shadow-lg">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
               <SparklesIcon className="h-8 w-8 text-white" />
               <div>
                 <h3 className="text-xl font-bold text-white">🚀 AI Trading Opportunities Available!</h3>
                 <p className="text-emerald-100">
-                  {aiOpportunities.length} profitable trades identified with potential profit of ${aiOpportunities.reduce((sum, opp) => sum + (opp.opportunity?.potential_profit || 0), 0).toLocaleString()}
+                  {auth.role === 'admin'
+                    ? `${allAiOpportunities.length} profitable trades identified with potential profit of $${allAiOpportunities.reduce((sum, opp) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0).toLocaleString()}`
+                    : `${aiOpportunities.length} profitable trades identified with potential profit of $${aiOpportunities.reduce((sum, opp) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0).toLocaleString()}`
+                  }
                 </p>
               </div>
             </div>
             <a 
               href="/trading" 
-              className="bg-white text-emerald-600 hover:text-emerald-700 px-6 py-3 rounded-md font-semibold transition-colors"
+              className="bg-white text-emerald-600 hover:text-emerald-700 px-6 py-3 rounded-lg font-semibold transition-colors shadow"
             >
               Review & Approve Trades →
             </a>
@@ -208,9 +234,11 @@ const Dashboard: React.FC = () => {
           color="purple"
         />
         <StatCard
-          title="Revenue"
-          value={`$${stats.totalRevenue.toFixed(2)}`}
-          subtitle={`${stats.profitMargin.toFixed(1)}% margin`}
+          title="Possible Revenue"
+          value={`$${(auth.role === 'admin'
+            ? allAiOpportunities.reduce((sum: number, opp: any) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0)
+            : aiOpportunities.reduce((sum: number, opp: any) => sum + (opp.opportunity?.potential_profit || opp.potential_profit || 0), 0)
+          ).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={CurrencyDollarIcon}
           color="yellow"
         />
@@ -227,7 +255,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* System Overview */}
         <div className="lg:col-span-2">
-          <SystemOverview />
+          <SystemOverview storeId={storeId} />
         </div>
 
         {/* Recent Activity */}
@@ -237,21 +265,20 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* AI Opportunities Section */}
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 shadow-lg">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <h3 className="text-xl font-semibold text-white">Latest AI Opportunities</h3>
           <a 
             href="/ai-insights" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm shadow"
           >
             View All AI Insights
           </a>
         </div>
-        
         {aiOpportunities.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {aiOpportunities.map((opportunity, index) => (
-              <div key={index} className="bg-gray-700 rounded-md p-4">
+              <div key={index} className="bg-gray-700 rounded-lg p-6 flex flex-col justify-between min-h-[170px] shadow">
                 <div className="flex justify-between items-start mb-2">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     {opportunity.opportunity?.type || opportunity.type || 'Opportunity'}
@@ -260,8 +287,8 @@ const Dashboard: React.FC = () => {
                     {opportunity.opportunity?.urgency || opportunity.urgency || 'medium'}
                   </span>
                 </div>
-                <p className="text-white font-medium mb-1">
-                  ${(opportunity.opportunity?.potential_profit || opportunity.potential_profit || 0).toFixed(2)} profit
+                <p className="text-white font-semibold text-lg mb-1">
+                  +${(opportunity.opportunity?.potential_profit || opportunity.potential_profit || 0).toLocaleString()} profit
                 </p>
                 <p className="text-gray-400 text-sm mb-2">
                   {(opportunity.opportunity?.source_store || opportunity.source_store) || 'N/A'} → {(opportunity.opportunity?.target_store || opportunity.target_store) || 'N/A'}
