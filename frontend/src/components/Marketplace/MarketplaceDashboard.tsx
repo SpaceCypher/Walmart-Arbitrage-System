@@ -59,7 +59,7 @@ interface TradeDecision {
   metadata?: any;
 }
 
-const MarketplaceDashboard: React.FC = () => {
+const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: string }> = ({ userRole, storeId }) => {
   const [bids, setBids] = useState<MarketBid[]>([]);
   const [matches, setMatches] = useState<MarketMatch[]>([]);
   const [tradeDecisions, setTradeDecisions] = useState<TradeDecision[]>([]);
@@ -82,6 +82,9 @@ const MarketplaceDashboard: React.FC = () => {
         marketplaceAPI.getMatches(),
         tradeDecisionsAPI.getAll({ limit: 50 }),
       ]);
+
+      // Add this line to inspect the API response for trade decisions
+      console.log('Trade Decisions API response:', decisionsResponse.data);
 
       setBids((bidsResponse.data as any)?.data?.bids || (bidsResponse.data as any) || []);
       setMatches((matchesResponse.data as any)?.data?.matches || (matchesResponse.data as any) || []);
@@ -140,10 +143,51 @@ const MarketplaceDashboard: React.FC = () => {
     );
   }
 
-  const activeBids = bids; // All bids are considered active since they're in the marketplace
-  const completedMatches = matches.filter(match => match.status === 'completed');
+  // Filter bids and matches for store users
+  const filteredBids = userRole === 'admin'
+    ? bids
+    : bids.filter(
+        b =>
+          b.fromStoreId === `STORE-${storeId}` ||
+          b.toStoreId === `STORE-${storeId}`
+      );
+
+  const filteredMatches = userRole === 'admin'
+    ? matches
+    : matches.filter(
+        m =>
+          m.buyProductId === `STORE-${storeId}` ||
+          m.sellProductId === `STORE-${storeId}`
+      );
+
+  // Use filtered data for stats
+  const activeBids = filteredBids;
+  const completedMatches = filteredMatches.filter(match => match.status === 'completed');
   const totalBidValue = activeBids.reduce((sum, bid) => sum + (bid.quantity * bid.pricePerUnit), 0);
   const totalMatchValue = completedMatches.reduce((sum, match) => sum + (match.quantity * match.agreedPrice), 0);
+
+  // Filter trade decisions based on user role
+  const filteredTradeDecisions = userRole === 'admin'
+    ? tradeDecisions
+    : tradeDecisions.filter(
+        d =>
+          d.opportunityData?.source_store === `STORE-${storeId}` ||
+          d.opportunityData?.target_store === `STORE-${storeId}`
+      );
+
+  // Use filteredTradeDecisions for stats if not admin
+  const statsTradeDecisions = userRole === 'admin' ? tradeDecisions : filteredTradeDecisions;
+
+  // Example: count of filtered trade decisions
+  const tradeHistoryCount = statsTradeDecisions.length;
+
+  // Example: total potential profit from filtered trade decisions
+  const totalPotentialProfit = statsTradeDecisions.reduce(
+    (sum, d) => sum + (d.opportunityData?.potential_profit || 0),
+    0
+  );
+
+  // You can add more stats as needed, e.g. count of approved, rejected, etc.
 
   return (
     <div className="space-y-6">
@@ -217,7 +261,7 @@ const MarketplaceDashboard: React.FC = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-300'
             }`}
           >
-            Recent Matches ({matches.length})
+            Recent Matches ({filteredMatches.length})
           </button>
           <button
             onClick={() => setActiveTab('decisions')}
@@ -227,7 +271,7 @@ const MarketplaceDashboard: React.FC = () => {
                 : 'border-transparent text-gray-500 hover:text-gray-300'
             }`}
           >
-            Trade History ({tradeDecisions.length})
+            Trade History ({filteredTradeDecisions.length})
           </button>
         </nav>
       </div>
@@ -354,9 +398,9 @@ const MarketplaceDashboard: React.FC = () => {
         {activeTab === 'decisions' && (
           <div className="p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Trade Decision History</h3>
-            {tradeDecisions.length > 0 ? (
+            {filteredTradeDecisions.length > 0 ? (
               <div className="space-y-4">
-                {tradeDecisions.map((decision) => (
+                {filteredTradeDecisions.map((decision) => (
                   <div key={decision._id} className="bg-gray-700 rounded-md p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
