@@ -178,6 +178,25 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
   // Use filteredTradeDecisions for stats if not admin
   const statsTradeDecisions = userRole === 'admin' ? tradeDecisions : filteredTradeDecisions;
 
+  // Completed Matches: total number of trades in trade history
+  const completedMatchesCount = filteredTradeDecisions.length;
+
+  // Match Value: sum of all potential_profit in trade history
+  const matchValue = filteredTradeDecisions.reduce(
+    (sum, d) => sum + (d.opportunityData?.potential_profit || 0),
+    0
+  );
+
+  // Active Bids: count all filtered bids
+  const activeBidsList = filteredBids;
+  const activeBidsCount = activeBidsList.length;
+
+  // Bid Value: sum of profitPotential of all filtered bids
+  const bidValue = activeBidsList.reduce(
+    (sum, bid) => sum + (bid.metadata?.profitPotential || 0),
+    0
+  );
+
   // Example: count of filtered trade decisions
   const tradeHistoryCount = statsTradeDecisions.length;
 
@@ -204,37 +223,34 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
             <ShoppingCartIcon className="h-8 w-8 text-blue-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Active Bids</p>
-              <p className="text-2xl font-bold text-white">{activeBids.length}</p>
+              <p className="text-2xl font-bold text-white">{activeBidsCount}</p>
             </div>
           </div>
         </div>
-        
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
           <div className="flex items-center">
             <UserGroupIcon className="h-8 w-8 text-green-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Completed Matches</p>
-              <p className="text-2xl font-bold text-white">{completedMatches.length}</p>
+              <p className="text-2xl font-bold text-white">{completedMatchesCount}</p>
             </div>
           </div>
         </div>
-
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
           <div className="flex items-center">
             <CurrencyDollarIcon className="h-8 w-8 text-purple-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Bid Value</p>
-              <p className="text-2xl font-bold text-white">${totalBidValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${bidValue.toLocaleString()}</p>
             </div>
           </div>
         </div>
-
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
           <div className="flex items-center">
             <CurrencyDollarIcon className="h-8 w-8 text-yellow-500" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-400">Match Value</p>
-              <p className="text-2xl font-bold text-white">${totalMatchValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-white">${matchValue.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -251,7 +267,7 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
                 : 'border-transparent text-gray-500 hover:text-gray-300'
             }`}
           >
-            Active Bids ({activeBids.length})
+            Active Bids ({activeBidsCount})
           </button>
           <button
             onClick={() => setActiveTab('matches')}
