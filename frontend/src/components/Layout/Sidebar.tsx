@@ -46,7 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
         `}
       >
         <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
-          <h1 className="text-xl font-bold text-white">AI Arbitrage</h1>
+          <h1 className="text-xl font-bold text-white cursor-pointer" onClick={() => navigate('/dashboard')}>
+            AI Arbitrage Network
+          </h1>
           <button
             onClick={() => setOpen(false)}
             className="lg:hidden text-gray-400 hover:text-white"

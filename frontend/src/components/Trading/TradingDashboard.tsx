@@ -19,6 +19,7 @@ import {
   calculateEnhancedTransportCost 
 } from '../../utils/storeData';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CardPopup from '../Common/CardPopup';
 
 interface TradeOpportunity {
   id: string;
@@ -158,6 +159,7 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
   const navigate = useNavigate();
   const selectedRef = useRef<HTMLDivElement | null>(null);
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [popup, setPopup] = useState<{ type: 'success' | 'error' | 'reject', message: string } | null>(null);
 
   // If logged in as store, lock the filter and prevent editing
   const isStoreUser = userRole === 'store';
@@ -365,14 +367,20 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
         console.warn('Could not mark opportunity as processed in AI system:', error);
       }
       
-      alert(`✅ Trade approved! Trade ${tradeId} and Bid ${bidId} created for ${opportunity.opportunity.quantity} units with potential profit of $${opportunity.opportunity.potential_profit.toLocaleString()}`);
+      setPopup({
+        type: 'success',
+        message: `✅ Trade approved! Trade ${tradeId} and Bid ${bidId} created for ${opportunity.opportunity.quantity} units with potential profit of $${opportunity.opportunity.potential_profit.toLocaleString()}`
+      });
     } catch (error) {
       console.error('Error approving trade:', error);
       
       // Re-add the opportunity back to the list if there was an error
       setOpportunities(prev => [opportunity, ...prev]);
       
-      alert(`❌ Failed to approve trade: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setPopup({
+        type: 'error',
+        message: `❌ Failed to approve trade: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
     } finally {
       setExecutingTrades(prev => {
         const newSet = new Set(prev);
@@ -411,14 +419,20 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
         console.warn('Could not mark opportunity as processed in AI system:', error);
       }
       
-      alert(`❌ Trade rejected for ${opportunity.product_id}`);
+      setPopup({
+        type: 'reject',
+        message: `❌ Trade rejected for ${opportunity.product_id}`
+      });
     } catch (error) {
       console.error('Error rejecting trade:', error);
       
       // Re-add the opportunity back to the list if there was an error
       setOpportunities(prev => [opportunity, ...prev]);
       
-      alert(`❌ Failed to reject trade: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setPopup({
+        type: 'error',
+        message: `❌ Failed to reject trade: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
     }
   };
 
@@ -443,6 +457,9 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
 
   return (
     <div className="space-y-6">
+      {popup && (
+        <CardPopup type={popup.type} message={popup.message} onClose={() => setPopup(null)} />
+      )}
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Trading Dashboard</h1>

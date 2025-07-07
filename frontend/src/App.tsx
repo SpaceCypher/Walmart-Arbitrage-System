@@ -60,58 +60,49 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-gray-900">
-        {/* Sidebar */}
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-        
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <Header 
-            onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-            isConnected={isConnected}
-            onLogout={handleLogout} // Pass logout to header
-            isAuthenticated={!!auth.role}
-          />
-          
-          {/* Main content area */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-800">
-            <div className="container mx-auto px-6 py-8">
-              <Routes>
-                {/* If not authenticated, show login page at root */}
-                {!auth.role && (
-                  <>
-                    <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
-                    {/* Redirect any other route to login */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </>
-                )}
-
-                {/* If authenticated, show app pages */}
-                {auth.role && (
-                  <>
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/agents" element={<AgentDashboard />} />
-                    <Route
-  path="/marketplace"
-  element={<MarketplaceDashboard userRole={auth.role as 'admin' | 'store'} storeId={auth.storeId} />}
-/>
-                    <Route path="/analytics" element={<AnalyticsDashboard />} />
-                    <Route path="/ai-insights" element={<AIInsightsDashboard />} />
-                    <Route
-                      path="/trading"
-                      element={<TradingDashboard userRole={auth.role} storeId={auth.storeId} />}
-                    />
-                    {/* Redirect any unknown route to dashboard */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </>
-                )}
-              </Routes>
-            </div>
-          </main>
+      {/* If not authenticated, show only the login/landing page */}
+      {!auth.role ? (
+        <Routes>
+          <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
+          {/* Redirect any other route to login */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      ) : (
+        <div className="flex h-screen bg-gray-900">
+          {/* Sidebar */}
+          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+          {/* Main content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Header */}
+            <Header 
+              onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+              isConnected={isConnected}
+              onLogout={handleLogout}
+              isAuthenticated={!!auth.role}
+              auth={auth}
+            />
+            {/* Main content area */}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-800">
+              <div className="container mx-auto px-6 py-8">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/agents" element={<AgentDashboard />} />
+                  <Route path="/marketplace" element={<MarketplaceDashboard />} />
+                  <Route path="/analytics" element={<AnalyticsDashboard />} />
+                  <Route path="/ai-insights" element={<AIInsightsDashboard />} />
+                  <Route
+                    path="/trading"
+                    element={<TradingDashboard userRole={auth.role} storeId={auth.storeId} />}
+                  />
+                  {/* Redirect any unknown route to dashboard */}
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      )}
     </Router>
   );
 }
