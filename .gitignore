@@ -5,6 +5,19 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 yarn.lock
+# .gitignore
+venv/
+venvo/
+ai-agents/venvo/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.sqlite3
+.env
+*.egg-info/
 
 # Build outputs
 dist/
