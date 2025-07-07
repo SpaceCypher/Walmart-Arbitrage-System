@@ -88,7 +88,7 @@ function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/agents" element={<AgentDashboard />} />
-                  <Route path="/marketplace" element={<MarketplaceDashboard />} />
+                  <Route path="/marketplace" element={<MarketplaceDashboard userRole={auth.role as 'admin' | 'store'} storeId={auth.storeId} />} />
                   <Route path="/analytics" element={<AnalyticsDashboard />} />
                   <Route path="/ai-insights" element={<AIInsightsDashboard />} />
                   <Route

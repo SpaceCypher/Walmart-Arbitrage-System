@@ -68,7 +68,6 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
 
   useEffect(() => {
     loadMarketplaceData();
-    
     // Refresh every 30 seconds
     const interval = setInterval(loadMarketplaceData, 30000);
     return () => clearInterval(interval);
@@ -83,8 +82,19 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
         tradeDecisionsAPI.getAll({ limit: 50 }),
       ]);
 
-      // Add this line to inspect the API response for trade decisions
-      console.log('Trade Decisions API response:', decisionsResponse.data);
+      // Debug: Log raw bids for admin
+      if (userRole === 'admin') {
+        console.log('ADMIN: Raw bids API response:', bidsResponse.data);
+      }
+
+      // Debug logging for API responses and props
+      console.log('MarketplaceDashboard DEBUG:', {
+        userRole,
+        storeId,
+        bidsRaw: bidsResponse.data,
+        matchesRaw: matchesResponse.data,
+        tradeDecisionsRaw: decisionsResponse.data,
+      });
 
       setBids((bidsResponse.data as any)?.data?.bids || (bidsResponse.data as any) || []);
       setMatches((matchesResponse.data as any)?.data?.matches || (matchesResponse.data as any) || []);
@@ -151,6 +161,14 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
           b.fromStoreId === `STORE-${storeId}` ||
           b.toStoreId === `STORE-${storeId}`
       );
+
+  // Debug logging for filtered bids
+  console.log('MarketplaceDashboard DEBUG: filteredBids', {
+    userRole,
+    storeId,
+    filteredBids,
+    allBids: bids,
+  });
 
   const filteredMatches = userRole === 'admin'
     ? matches
