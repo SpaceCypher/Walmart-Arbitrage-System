@@ -64,7 +64,7 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
   const [matches, setMatches] = useState<MarketMatch[]>([]);
   const [tradeDecisions, setTradeDecisions] = useState<TradeDecision[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'bids' | 'matches' | 'decisions'>('bids');
+  const [activeTab, setActiveTab] = useState<'bids' | 'decisions'>('bids');
 
   useEffect(() => {
     loadMarketplaceData();
@@ -288,16 +288,6 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
             Active Bids ({activeBidsCount})
           </button>
           <button
-            onClick={() => setActiveTab('matches')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'matches'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            Recent Matches ({filteredMatches.length})
-          </button>
-          <button
             onClick={() => setActiveTab('decisions')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'decisions'
@@ -372,58 +362,6 @@ const MarketplaceDashboard: React.FC<{ userRole: 'admin' | 'store'; storeId?: st
                 <ShoppingCartIcon className="h-12 w-12 text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400">No active bids in the marketplace</p>
                 <p className="text-gray-500 text-sm">Create trades in the Trading dashboard to see them here</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'matches' && (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Recent Marketplace Matches</h3>
-            {matches.length > 0 ? (
-              <div className="space-y-4">
-                {matches.map((match) => (
-                  <div key={match.id} className="bg-gray-700 rounded-md p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          {getStatusIcon(match.status)}
-                          <h4 className="text-white font-medium">Match {match.id}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(match.status)}`}>
-                            {match.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-400">Buy Product</p>
-                            <p className="text-white">{match.buyProductId}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Sell Product</p>
-                            <p className="text-white">{match.sellProductId}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Quantity</p>
-                            <p className="text-white">{match.quantity} units</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400">Agreed Price</p>
-                            <p className="text-green-400 font-medium">${(match.quantity * match.agreedPrice).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right text-sm text-gray-400">
-                        <p>Matched: {new Date(match.createdAt).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <UserGroupIcon className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No marketplace matches yet</p>
-                <p className="text-gray-500 text-sm">Successful bid matches will appear here</p>
               </div>
             )}
           </div>

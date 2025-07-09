@@ -145,67 +145,7 @@ const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* System Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-white">
-                ${analytics?.totalRevenue?.toLocaleString() || '0'}
-              </p>
-            </div>
-            <CurrencyDollarIcon className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">Profit Margin</p>
-              <p className="text-2xl font-bold text-white">
-                {((analytics?.profitMargin || 0) * 100).toFixed(1)}%
-              </p>
-            </div>
-            <ArrowTrendingUpIcon className="h-8 w-8 text-blue-500" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">Total Transactions</p>
-              <p className="text-2xl font-bold text-white">
-                {analytics?.totalTransactions?.toLocaleString() || '0'}
-              </p>
-            </div>
-            <ChartBarIcon className="h-8 w-8 text-purple-500" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">Active Agents</p>
-              <p className="text-2xl font-bold text-white">
-                {analytics?.activeAgents || '0'}
-              </p>
-            </div>
-            <UserGroupIcon className="h-8 w-8 text-orange-500" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">Success Rate</p>
-              <p className="text-2xl font-bold text-white">
-                {((analytics?.successRate || 0) * 100).toFixed(1)}%
-              </p>
-            </div>
-            <CheckCircleIcon className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-      </div>
+      {/* Removed: Total Revenue, Profit Margin, Total Transactions, Active Agents, Success Rate stat cards */}
 
       {/* AI Performance Section */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">

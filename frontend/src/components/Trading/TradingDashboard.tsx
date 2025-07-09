@@ -45,109 +45,11 @@ interface TradeOpportunity {
   status?: 'pending' | 'approved' | 'rejected' | 'executed';
 }
 
-// Helper function to calculate distance between stores
-const calculateDistance = (sourceStore: string, targetStore: string): number => {
-  return calculateRealDistance(sourceStore, targetStore);
-};
-
-// Helper function to calculate transport cost
-const calculateTransportCost = (productId: string, quantity: number, distance: number): { totalCost: number, breakdown: any } => {
-  return calculateEnhancedTransportCost(productId, quantity, distance);
-};
-
-// Helper function to get product name from product ID
-const getProductName = (productId: string): string => {
-  const product = PRODUCT_CATALOG[productId as keyof typeof PRODUCT_CATALOG];
-  return product?.name || `Product ${productId}`;
-};
-
-// Helper function to get store details
-const getStoreDetails = (storeId: string) => {
-  return STORE_LOCATIONS[storeId as keyof typeof STORE_LOCATIONS] || {
-    name: `Store ${storeId}`,
-    location: 'Unknown Location',
-    type: 'retail',
-    capacity: 1000,
-    specialties: []
-  };
-};
-
-// Helper function to get product details
-const getProductDetails = (productId: string) => {
-  return PRODUCT_CATALOG[productId as keyof typeof PRODUCT_CATALOG] || {
-    name: `Product ${productId}`,
-    category: 'Unknown',
-    brand: 'Unknown',
-    weight: 1,
-    dimensions: { length: 20, width: 15, height: 10 },
-    fragile: false,
-    temperature_controlled: false,
-    value_per_unit: 100
-  };
-};
-
-// Helper function to calculate estimated delivery time
-const calculateDeliveryTime = (distance: number, isUrgent: boolean): string => {
-  // Base time: 1 hour per 50km, minimum 2 hours
-  let hours = Math.max(2, Math.ceil(distance / 50));
-  
-  // Add processing time
-  hours += isUrgent ? 1 : 2;
-  
-  if (hours <= 24) {
-    return `${hours} hours`;
-  } else {
-    const days = Math.ceil(hours / 24);
-    return `${days} ${days === 1 ? 'day' : 'days'}`;
-  }
-};
-
-// Helper function to get urgency color
-const getUrgencyColor = (urgency: string) => {
-  switch (urgency.toLowerCase()) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-// Helper function to get type icon
-const getTypeIcon = (type: string) => {
-  switch (type.toLowerCase()) {
-    case 'arbitrage':
-      return <CurrencyDollarIcon className="h-6 w-6 text-green-400" />;
-    case 'restock':
-      return <CubeIcon className="h-6 w-6 text-blue-400" />;
-    default:
-      return <SparklesIcon className="h-6 w-6 text-purple-400" />;
-  }
-};
-
-// Helper function to get store type info
-const getStoreTypeInfo = (type: string) => {
-  switch (type) {
-    case 'flagship':
-      return { icon: '🏢', color: 'text-purple-400', label: 'Flagship Store' };
-    case 'warehouse':
-      return { icon: '🏭', color: 'text-blue-400', label: 'Warehouse' };
-    case 'distribution':
-      return { icon: '📦', color: 'text-green-400', label: 'Distribution Center' };
-    case 'outlet':
-      return { icon: '🏪', color: 'text-orange-400', label: 'Outlet Store' };
-    default:
-      return { icon: '🏬', color: 'text-gray-400', label: 'Retail Store' };
-  }
-};
-
-interface TradingDashboardProps {
+// Add missing TradingDashboardProps interface
+type TradingDashboardProps = {
   userRole: 'admin' | 'store';
   storeId?: string;
-}
+};
 
 const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }) => {
   const [opportunities, setOpportunities] = useState<TradeOpportunity[]>([]);
@@ -155,6 +57,122 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
   const [filter, setFilter] = useState<'all' | 'high-profit' | 'urgent'>('all');
   const [executingTrades, setExecutingTrades] = useState<Set<string>>(new Set());
   const [storeFilter, setStoreFilter] = useState(storeId || '');
+  const [storeDetails, setStoreDetails] = useState<Record<string, any>>({});
+
+  // Helper function to get store details (prefer backend, fallback to static, merge fields)
+  const getStoreDetails = (storeId: string) => {
+    const backend = storeDetails[storeId] || {};
+    const staticData = STORE_LOCATIONS[storeId as keyof typeof STORE_LOCATIONS] || {};
+    return {
+      name: backend.name || staticData.name || `Store ${storeId}`,
+      location: backend.location || staticData.location || 'Unknown Location',
+      address: backend.address || staticData.address || null,
+      type: backend.type || staticData.type || 'retail',
+      capacity: backend.capacity || staticData.capacity || 1000,
+      specialties: backend.specialties || staticData.specialties || [],
+      ...backend, // include any extra backend fields
+    };
+  };
+
+  // Helper function to get product details
+  const getProductDetails = (productId: string) => {
+    return PRODUCT_CATALOG[productId as keyof typeof PRODUCT_CATALOG] || {
+      name: `Product ${productId}`,
+      category: 'Unknown',
+      brand: 'Unknown',
+      weight: 1,
+      dimensions: { length: 20, width: 15, height: 10 },
+      fragile: false,
+      temperature_controlled: false,
+      value_per_unit: 100
+    };
+  };
+
+  // Helper function to get store type info
+  const getStoreTypeInfo = (type: string) => {
+    switch (type) {
+      case 'flagship':
+        return { icon: '🏢', color: 'text-purple-400', label: 'Flagship Store' };
+      case 'warehouse':
+        return { icon: '🏭', color: 'text-blue-400', label: 'Warehouse' };
+      case 'distribution':
+        return { icon: '📦', color: 'text-green-400', label: 'Distribution Center' };
+      case 'outlet':
+        return { icon: '🏪', color: 'text-orange-400', label: 'Outlet Store' };
+      default:
+        return { icon: '🏬', color: 'text-gray-400', label: 'Retail Store' };
+    }
+  };
+
+  // Helper function to calculate estimated delivery time
+  const calculateDeliveryTime = (distance: number, isUrgent: boolean): string => {
+    let hours = Math.max(2, Math.ceil(distance / 50));
+    hours += isUrgent ? 1 : 2;
+    if (hours <= 24) {
+      return `${hours} hours`;
+    } else {
+      const days = Math.ceil(hours / 24);
+      return `${days} ${days === 1 ? 'day' : 'days'}`;
+    }
+  };
+
+  // Helper function to get type icon
+  const getTypeIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'arbitrage':
+        return <CurrencyDollarIcon className="h-6 w-6 text-green-400" />;
+      case 'restock':
+        return <CubeIcon className="h-6 w-6 text-blue-400" />;
+      default:
+        return <SparklesIcon className="h-6 w-6 text-purple-400" />;
+    }
+  };
+
+  // Helper function to get urgency color
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Helper function to calculate distance between stores
+  const calculateDistance = (sourceStore: string, targetStore: string): number => {
+    return calculateRealDistance(sourceStore, targetStore);
+  };
+
+  // Helper function to calculate transport cost
+  const calculateTransportCost = (productId: string, quantity: number, distance: number): { totalCost: number, breakdown: any } => {
+    return calculateEnhancedTransportCost(productId, quantity, distance);
+  };
+
+  // Helper function to get product name from product ID
+  const getProductName = (productId: string): string => {
+    const product = PRODUCT_CATALOG[productId as keyof typeof PRODUCT_CATALOG];
+    return product?.name || `Product ${productId}`;
+  };
+
+  // Helper function to get store details from backend (with cache)
+  const storeDetailsCache: Record<string, any> = {};
+  async function fetchStoreDetails(storeId: string): Promise<any> {
+    if (storeDetailsCache[storeId]) return storeDetailsCache[storeId];
+    try {
+      const res = await fetch(`/api/v1/stores/${storeId}`);
+      if (!res.ok) throw new Error('Not found');
+      const data = await res.json();
+      storeDetailsCache[storeId] = data.data || data.store || data;
+      return storeDetailsCache[storeId];
+    } catch {
+      return null;
+    }
+  }
+
   const location = useLocation();
   const navigate = useNavigate();
   const selectedRef = useRef<HTMLDivElement | null>(null);
@@ -436,6 +454,19 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
     }
   };
 
+  // Fetch store details for all unique store IDs in opportunities
+  useEffect(() => {
+    const uniqueStoreIds = Array.from(new Set(
+      opportunities.flatMap(opp => [opp.opportunity.source_store, opp.opportunity.target_store])
+    ));
+    uniqueStoreIds.forEach(async (id) => {
+      if (!storeDetails[id]) {
+        const details = await fetchStoreDetails(id);
+        if (details) setStoreDetails(prev => ({ ...prev, [id]: details }));
+      }
+    });
+  }, [opportunities]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -643,7 +674,11 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
                             <span>{sourceStore.name}</span>
                           </p>
                           <p className="text-xs text-gray-500">{opportunity.opportunity.source_store}</p>
-                          <p className="text-xs text-gray-400">{sourceStore.location}</p>
+                          {sourceStore.address && (
+                            <p className="text-xs text-gray-400">
+                              {sourceStore.address.street}, {sourceStore.address.city}, {sourceStore.address.state} {sourceStore.address.zipCode}, {sourceStore.address.country}
+                            </p>
+                          )}
                           <span className={`text-xs ${sourceStoreType.color} mt-1 inline-block`}>
                             {sourceStoreType.label}
                           </span>
@@ -667,7 +702,11 @@ const TradingDashboard: React.FC<TradingDashboardProps> = ({ userRole, storeId }
                             <span>{targetStore.name}</span>
                           </p>
                           <p className="text-xs text-gray-500">{opportunity.opportunity.target_store}</p>
-                          <p className="text-xs text-gray-400">{targetStore.location}</p>
+                          {targetStore.address && (
+                            <p className="text-xs text-gray-400">
+                              {targetStore.address.street}, {targetStore.address.city}, {targetStore.address.state} {targetStore.address.zipCode}, {targetStore.address.country}
+                            </p>
+                          )}
                           <span className={`text-xs ${targetStoreType.color} mt-1 inline-block`}>
                             {targetStoreType.label}
                           </span>

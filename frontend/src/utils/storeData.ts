@@ -7,7 +7,14 @@ export const STORE_LOCATIONS = {
     coordinates: { lat: 40.7589, lng: -73.9851 },
     type: 'flagship',
     capacity: 10000,
-    specialties: ['electronics', 'appliances']
+    specialties: ['electronics', 'appliances'],
+    address: {
+      street: '123 Main St',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10001',
+      country: 'USA'
+    }
   },
   'STORE-4578': {
     name: 'North Side Warehouse',
@@ -15,7 +22,14 @@ export const STORE_LOCATIONS = {
     coordinates: { lat: 40.7831, lng: -73.9712 },
     type: 'warehouse',
     capacity: 50000,
-    specialties: ['bulk_storage', 'distribution']
+    specialties: ['bulk_storage', 'distribution'],
+    address: {
+      street: '456 North Ave',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10024',
+      country: 'USA'
+    }
   },
   'STORE-8943': {
     name: 'Central Distribution Center',
@@ -23,7 +37,14 @@ export const STORE_LOCATIONS = {
     coordinates: { lat: 40.7505, lng: -73.9934 },
     type: 'distribution',
     capacity: 75000,
-    specialties: ['logistics', 'bulk_distribution']
+    specialties: ['logistics', 'bulk_distribution'],
+    address: {
+      street: '789 Central Blvd',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10018',
+      country: 'USA'
+    }
   },
   'STORE-2156': {
     name: 'West Coast Branch',
@@ -31,7 +52,14 @@ export const STORE_LOCATIONS = {
     coordinates: { lat: 40.7648, lng: -74.0020 },
     type: 'retail',
     capacity: 8000,
-    specialties: ['retail', 'customer_service']
+    specialties: ['retail', 'customer_service'],
+    address: {
+      street: '321 West St',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10014',
+      country: 'USA'
+    }
   },
   'STORE-7829': {
     name: 'East Side Outlet',
@@ -39,7 +67,14 @@ export const STORE_LOCATIONS = {
     coordinates: { lat: 40.7282, lng: -73.9942 },
     type: 'outlet',
     capacity: 12000,
-    specialties: ['discounted_goods', 'clearance']
+    specialties: ['discounted_goods', 'clearance'],
+    address: {
+      street: '654 East Ave',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10003',
+      country: 'USA'
+    }
   }
 };
 
