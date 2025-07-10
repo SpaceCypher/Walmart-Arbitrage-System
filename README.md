@@ -291,3 +291,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Built with ❤️ by the Walmart Inventory Innovation Team**
+
+# Walmart Arbitrage System
+
+## Running the Project
+
+### Frontend
+```sh
+cd frontend && npm i && npm run build && npm start
+```
+
+### Backend
+```sh
+cd backend && npm i && npm run dev
+```
+
+### AI Agents
+```sh
+cd ai-agents && source venv/bin/activate && python simple_ai_api.py
+```
+
+---
+
+For more details, see the respective folder README or documentation.
