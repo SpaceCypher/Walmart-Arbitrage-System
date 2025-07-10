@@ -34,8 +34,23 @@ cypress/videos/
 cypress/screenshots/
 jest_html_reporters.html
 
-# Environment variables
-
+# Environment variables and secrets
+.env
+.env.*
+ai-agents/.env
+backend/.env
+frontend/.env
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+*.secret
+*.secrets
+config/*.json
+config/*.yml
+config/*.yaml
+credentials.json
+secrets.json
 
 # IDE files
 .vscode/
@@ -259,4 +274,4 @@ local.sqlite
 docker-volumes/
 postgres-data/
 redis-data/
-ai-agents/venv/ 
+ai-agents/venv/
