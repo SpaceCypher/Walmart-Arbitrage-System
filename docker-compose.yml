@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  keydb:
+    image: eqalpha/keydb
+    ports:
+      - "6379:6379"
+    restart: always
+
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      KEYDB_HOST: keydb
+      KEYDB_PORT: 6379
+      AI_AGENT_API_URL: http://ai-agents:8000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - keydb
+      - ai-agents
+
+  ai-agents:
+    build: ./ai-agents
+    env_file: ./ai-agents/.env
+    environment:
+      KEYDB_HOST: keydb
+      KEYDB_PORT: 6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      - keydb
