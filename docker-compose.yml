@@ -18,6 +18,12 @@ services:
     depends_on:
       - keydb
       - ai-agents
+  frontend:
+      build: ./frontend
+      ports:
+        - "80:80"
+      environment:
+        REACT_APP_API_BASE_URL: http://backend:3001
 
   ai-agents:
     build: ./ai-agents
