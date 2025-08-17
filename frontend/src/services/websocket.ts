@@ -25,14 +25,21 @@ class WebSocketService {
   }
 
   connect() {
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3000';
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'https://52.66.251.174';
+    
+    console.log('🔌 Connecting to WebSocket:', socketUrl);
+    console.log('🌍 Environment variables:', {
+      REACT_APP_SOCKET_URL: process.env.REACT_APP_SOCKET_URL,
+      REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL
+    });
     
     this.socket = io(socketUrl, {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
       reconnectionDelay: this.reconnectInterval,
       reconnectionAttempts: this.maxReconnectAttempts,
+      forceNew: true,
     });
 
     this.setupEventListeners();
