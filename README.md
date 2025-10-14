@@ -30,7 +30,9 @@ cd backend && npm i && npm run dev
 ```sh
 cd ai-agents && source venv/bin/activate && python simple_ai_api.py
 ```
-
+### 4. To get it running u need to run the following in your terminal imp : 
+```sh
+curl -X POST http://localhost:3001/api/v1/ai-agents/cycle
 ---
 
 For more details, see the respective folder README or documentation.
