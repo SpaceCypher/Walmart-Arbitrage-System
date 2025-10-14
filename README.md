@@ -29,6 +29,10 @@ cd backend && npm i && npm run dev
 ### 3. AI Agents
 ```sh
 cd ai-agents && source venv/bin/activate && python simple_ai_api.py
+#NOTE above for mac/ linux
+cd ai-agents && venv\Scripts\activate && python simple_ai_api.py
+FOR WINDOWS
+
 ```
 ### 4. To get it running u need to run the following in your terminal imp : 
 ```sh
