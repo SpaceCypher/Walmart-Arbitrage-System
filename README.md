@@ -28,6 +28,10 @@ cd backend && npm i && npm run dev
 
 ### 3. AI Agents
 ```sh
+cd ai-agents
+then run:
+pip install -r requirements.txt
+
 cd ai-agents && source venv/bin/activate && python simple_ai_api.py
 #NOTE above for mac/ linux
 cd ai-agents && venv\Scripts\activate && python simple_ai_api.py
